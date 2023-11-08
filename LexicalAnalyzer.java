@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.StringTokenizer;
+
 public class LexicalAnalyzer {
 
     private static final String[] keywords = {"int", "float", "double", "if", "else", "while", "for", "return"};
@@ -22,15 +23,20 @@ public class LexicalAnalyzer {
 
         while (tokenizer.hasMoreTokens()) {
             String token = tokenizer.nextToken();
+            String lexeme = token;
+            String tokenType = null;
+
             if (isKeyword(token)) {
-                System.out.println(token + " - KEYWORD");
+                tokenType = "KEYWORD";
             } else if (isIdentifier(token)) {
-                System.out.println(token + " - IDENTIFIER");
+                tokenType = "IDENTIFIER";
             } else if (isOperator(token)) {
-                System.out.println(token + " - OPERATOR");
+                tokenType = "OPERATOR";
             } else {
-                System.out.println(token + " - UNKNOWN");
+                tokenType = "UNKNOWN";
             }
+
+            System.out.println("token : " + tokenType + ", Lexeme: " + lexeme);
         }
     }
 
