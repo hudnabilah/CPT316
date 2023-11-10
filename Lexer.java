@@ -58,7 +58,7 @@ public enum Type {
     public static List<Token> lex(String input) {
         String localKeywordPattern = "\\b(?<!\\w)(define|if|else|while|for|return|\\+|lambda|let|cond|and|or|not|begin|quote|set!)(?!\\w)\\b";
         String localConstantPattern = "\\b\\d+\\b";
-        String localidentifierPattern = "\\b(?!define\\b)[a-zA-Z]\\w*\\b";
+        String localidentifierPattern = "\\b(?!define\\b|if\\b|else\\b|while\\b|for\\b|return\\b|\\+\\b|lambda\\b|let\\b|cond\\b|and\\b|or\\b|not\\b|begin\\b|quote\\b|set!\\b)[a-zA-Z]\\w*\\b";
         String localliteralPattern = "\"[^\"]*\"";
         String localsymbolPattern = "[#&$@]"; // Add more symbols as needed
         String localoperatorPattern = "\\+|-|\\*|/|%|==|!=|<|>|<=|>=|\\=";
