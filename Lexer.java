@@ -20,7 +20,8 @@ public enum Type {
     SYMBOL,
     LITERAL,
     IDENTIFIER,
-    OPERATOR
+    OPERATOR,
+    SEPARATOR
 }
 
 
@@ -59,8 +60,10 @@ public enum Type {
         String localConstantPattern = "\\b\\d+\\b";
         String localidentifierPattern = "\\b(?!define\\b)[a-zA-Z]\\w*\\b";
         String localliteralPattern = "\"[^\"]*\"";
-        String localsymbolPattern = "\\(|\\)|\\{|\\}|;"; // Add more symbols as needed
-        String localoperatorPattern = "\\+|-|\\*|/|%|==|!=|<|>|<=|>=|\\="; // Add more operators as needed
+        String localsymbolPattern = "[#&$@]"; // Add more symbols as needed
+        String localoperatorPattern = "\\+|-|\\*|/|%|==|!=|<|>|<=|>=|\\=";
+        String localseparatorPattern = "\\(|\\)|\\{|\\}|;|,|:|_";
+
 
 
         // Combine patterns into a separate regex for each language construct
@@ -70,6 +73,7 @@ public enum Type {
         String literalRegex = String.format("(%s)", localliteralPattern);
         String symbolRegex = String.format("(%s)", localsymbolPattern);
         String operatorRegex = String.format("(%s)", localoperatorPattern);
+        String separatorRegex = String.format("(%s)", localseparatorPattern);
 
 
         // Compile the regular expressions
@@ -79,6 +83,7 @@ public enum Type {
         Pattern literalPattern = Pattern.compile(literalRegex);
         Pattern symbolPattern = Pattern.compile(symbolRegex);
         Pattern operatorPattern = Pattern.compile(operatorRegex);
+        Pattern separatorPattern = Pattern.compile(separatorRegex);
 
 
         // Match the input against each regular expression
@@ -88,6 +93,7 @@ public enum Type {
         Matcher literalMatcher = literalPattern.matcher(input);
         Matcher symbolMatcher = symbolPattern.matcher(input);
         Matcher operatorMatcher = operatorPattern.matcher(input);
+        Matcher separatorMatcher = separatorPattern.matcher(input);
 
 
         // Create a list to store the tokens
@@ -107,6 +113,8 @@ public enum Type {
                 tokens.add(new Token(Type.SYMBOL, symbolMatcher.group()));
             } else if (operatorMatcher.find()) {
                 tokens.add(new Token(Type.OPERATOR, operatorMatcher.group()));
+            } else if (separatorMatcher.find()) {
+                tokens.add(new Token(Type.SEPARATOR, separatorMatcher.group()));
             } else {
                 break; // No more matches, exit the loop
             }
