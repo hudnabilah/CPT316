@@ -14,16 +14,16 @@ import java.util.regex.Pattern;
 public class Lexer {
 
 
-public enum Type {
-    KEYWORD,
-    CONSTANT,
-    SYMBOL,
-    LITERAL,
-    IDENTIFIER,
-    OPERATOR,
-    SEPARATOR
-}
 
+    public enum Type {
+        KEYWORD,
+        CONSTANT,
+        SYMBOL,
+        LITERAL,
+        IDENTIFIER,
+        OPERATOR,
+        SEPARATOR
+    }
 
 
     public static class Token {
@@ -38,6 +38,22 @@ public enum Type {
         public String toString() {
             return t.toString() + "<" + c + ">";
         }
+    }
+
+
+    /*
+     * Given a String, and an index, get the atom starting at that index
+     */
+    public static String getAtom(String s, int i) {
+        int j = i;
+        for (; j < s.length(); ) {
+            if (Character.isLetter(s.charAt(j))) {
+                j++;
+            } else {
+                return s.substring(i, j);
+            }
+        }
+        return s.substring(i, j);
     }
 
         /*
@@ -55,6 +71,7 @@ public enum Type {
             return s.substring(i, j);
         }
 
+
     public static List<Token> lex(String input) {
         String localKeywordPattern = "\\b(?<!\\w)(define|if|else|while|for|return|\\+|lambda|let|cond|and|or|not|begin|quote|set!)(?!\\w)\\b";
         String localConstantPattern = "\\b\\d+\\b";
@@ -63,7 +80,6 @@ public enum Type {
         String localsymbolPattern = "[#&$@]"; // Add more symbols as needed
         String localoperatorPattern = "\\+|-|\\*|/|%|==|!=|<|>|<=|>=|\\=";
         String localseparatorPattern = "\\(|\\)|\\{|\\}|;|,|:|_";
-
 
 
         // Combine patterns into a separate regex for each language construct
@@ -124,6 +140,52 @@ public enum Type {
         return tokens;
     }
 
+
+    private static boolean isNumber(String s) {
+        // Implement logic to check if the token is a number
+        return s.matches("\\d+");
+    }
+
+    private static boolean isSymbol(String s) {
+        // Implement logic to check if the token is a symbol
+        return s.matches("[!@#$%^&*()_+\\-=\\[\\]{};':\"\\|,.<>\\/?]+");
+    }
+
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("Enter source code:");
+            String input = scanner.nextLine();
+
+            if (input.trim().endsWith("}")) {
+                List<Token> tokens = lex(input);
+                System.out.println("Tokens:");
+                for (Token t : tokens) {
+                    System.out.println(t);
+                }
+
+                System.out.println("Do you want to enter another source code? (yes/no)");
+                String response = scanner.nextLine().trim().toLowerCase();
+                if (!response.equals("yes")) {
+                    break;  // Exit the loop if the user doesn't want to enter another source code
+                }
+            } else {
+                System.out.println("Error: Source code must end with a curly bracket (})");
+                System.out.println("Do you want to re-enter the source code? (yes/no)");
+
+                String response = scanner.nextLine().trim().toLowerCase();
+                if (!response.equals("yes")) {
+                    break;  // Exit the loop if the user doesn't want to re-enter the source code
+                }
+            }
+        }
+
+        scanner.close();
+    }
+}
+
         private static boolean isNumber(String s) {
             // Implement logic to check if the token is a number
             return s.matches("\\d+");
@@ -150,5 +212,6 @@ public enum Type {
             scanner.close();
         }
     }
+
 
 
