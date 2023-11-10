@@ -12,6 +12,8 @@ import java.util.regex.Pattern;
  * (define (foo x) (bar (baz x)))
  */
 public class Lexer {
+
+
 public enum Type {
     KEYWORD,
     CONSTANT,
@@ -53,12 +55,12 @@ public enum Type {
         }
 
     public static List<Token> lex(String input) {
-        String localKeywordPattern = "\\b(?<!\\w)(define|if|else|while|for|return|\\+)(?!\\w)\\b";
+        String localKeywordPattern = "\\b(?<!\\w)(define|if|else|while|for|return|\\+|lambda|let|cond|and|or|not|begin|quote|set!)(?!\\w)\\b";
         String localConstantPattern = "\\b\\d+\\b";
-        String localidentifierPattern = "\\b(?!define\\b)[a-zA-Z][a-zA-Z0-9]*\\b";
+        String localidentifierPattern = "\\b(?!define\\b)[a-zA-Z]\\w*\\b";
         String localliteralPattern = "\"[^\"]*\"";
         String localsymbolPattern = "\\(|\\)|\\{|\\}|;"; // Add more symbols as needed
-        String localoperatorPattern = "\\+|-|\\*|/|%|==|!=|<|>|<=|>="; // Add more operators as needed
+        String localoperatorPattern = "\\+|-|\\*|/|%|==|!=|<|>|<=|>=|\\="; // Add more operators as needed
 
 
         // Combine patterns into a separate regex for each language construct
