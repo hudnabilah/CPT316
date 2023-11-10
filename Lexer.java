@@ -41,37 +41,6 @@ public class Lexer {
     }
 
 
-    /*
-     * Given a String, and an index, get the atom starting at that index
-     */
-    public static String getAtom(String s, int i) {
-        int j = i;
-        for (; j < s.length(); ) {
-            if (Character.isLetter(s.charAt(j))) {
-                j++;
-            } else {
-                return s.substring(i, j);
-            }
-        }
-        return s.substring(i, j);
-    }
-
-        /*
-         * Given a String, and an index, get the atom starting at that index
-         */
-        public static String getAtom(String s, int i) {
-            int j = i;
-            for (; j < s.length(); ) {
-                if (Character.isLetter(s.charAt(j))) {
-                    j++;
-                } else {
-                    return s.substring(i, j);
-                }
-            }
-            return s.substring(i, j);
-        }
-
-
     public static List<Token> lex(String input) {
         String localKeywordPattern = "\\b(?<!\\w)(define|if|else|while|for|return|\\+|lambda|let|cond|and|or|not|begin|quote|set!)(?!\\w)\\b";
         String localConstantPattern = "\\b\\d+\\b";
@@ -112,6 +81,8 @@ public class Lexer {
         Matcher separatorMatcher = separatorPattern.matcher(input);
 
 
+
+
         // Create a list to store the tokens
         List<Token> tokens = new ArrayList<>();
 
@@ -135,6 +106,7 @@ public class Lexer {
                 break; // No more matches, exit the loop
             }
         }
+
 
         // Return the list of tokens
         return tokens;
@@ -186,32 +158,8 @@ public class Lexer {
     }
 }
 
-        private static boolean isNumber(String s) {
-            // Implement logic to check if the token is a number
-            return s.matches("\\d+");
-        }
-
-        private static boolean isSymbol(String s) {
-            // Implement logic to check if the token is a symbol
-            return s.matches("[!@#$%^&*()_+\\-=\\[\\]{};':\"\\|,.<>\\/?]+");
-        }
-
-        public static void main(String[] args) {
-            Scanner scanner = new Scanner(System.in);
 
 
-            System.out.println("Enter source code:");
-            String input = scanner.nextLine();
-
-            List<Token> tokens = lex(input);
-            System.out.println("Tokens:");
-            for (Token t : tokens) {
-                System.out.println(t);
-            }
-
-            scanner.close();
-        }
-    }
 
 
 
