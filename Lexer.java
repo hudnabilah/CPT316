@@ -112,3 +112,122 @@ public class Lexer {
         scanner.close();
     }
 }
+
+public class Parser {
+
+    private final List<Lexer.Token> tokens;
+    private int pos;
+
+    public Parser(List<Lexer.Token> tokens) {
+        this.tokens = tokens;
+        this.pos = 0;
+    }
+
+    public void error(String msg) {
+        throw new Error("Syntax error at position {pos}: {msg}");
+    }
+
+    public boolean consume(Lexer.Type t) {
+        if (tokens.get(pos).t == t) {
+            pos++;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public void expect(Lexer.Type t) {
+        if (!consume(t)) {
+            error("Expected {t}, got {tokens.get(pos).t}");
+        }
+    }
+
+    public void program() {
+        expr();
+        expect(Lexer.Type.SEPARATOR);
+    }
+
+    public void expr() {
+        if (consume(Lexer.Type.KEYWORD, "define")) {
+            define();
+        } else if (consume(Lexer.Type.KEYWORD, "if")) {
+            ifExpr();
+        } else if (consume(Lexer.Type.KEYWORD, "while")) {
+            whileExpr();
+        } else if (consume(Lexer.Type.KEYWORD, "for")) {
+            forExpr();
+        } else if (consume(Lexer.Type.KEYWORD, "return")) {
+            returnExpr();
+        } else {
+            factor();
+        }
+    }
+
+    public void define() {
+        expect(Lexer.Type.IDENTIFIER);
+        expect(Lexer.Type.SEPARATOR);
+        expr();
+    }
+
+    public void ifExpr() {
+        expect(Lexer.Type.SEPARATOR);
+        expr();
+        expect(Lexer.Type.KEYWORD, "then");
+        expr();
+        expect(Lexer.Type.KEYWORD, "else");
+        expr();
+        expect(Lexer.Type.SEPARATOR);
+    }
+
+    public void whileExpr() {
+        expect(Lexer.Type.SEPARATOR);
+        expr();
+        expect(Lexer.Type.KEYWORD, "do");
+        expr();
+        expect(Lexer.Type.SEPARATOR);
+    }
+
+    public void forExpr() {
+        expect(Lexer.Type.IDENTIFIER);
+        expect(Lexer.Type.OPERATOR, "=");
+        expr();
+        expect(Lexer.Type.KEYWORD, "to");
+        expr();
+        expect(Lexer.Type.KEYWORD, "do");
+        expr();
+        expect(Lexer.Type.SEPARATOR);
+    }
+
+    public void returnExpr() {
+        expect(Lexer.Type.SEPARATOR);
+        expr();
+        expect(Lexer.Type.SEPARATOR);
+    }
+
+    public void factor() {
+        if (consume(Lexer.Type.IDENTIFIER)) {
+            id();
+        } else if (consume(Lexer.Type.CONSTANT)) {
+            num();
+        } else if (consume(Lexer.Type.LITERAL)) {
+            str();
+        } else if (consume(Lexer.Type.SEPARATOR, "(")) {
+            expr();
+            expect(Lexer.Type.SEPARATOR, ")");
+        } else {
+            error("Expected a factor, got {tokens.get(pos).t}");
+        }
+    }
+
+    public void id() {
+        expect(Lexer.Type.IDENTIFIER);
+    }
+
+    public void num() {
+        expect(Lexer.Type.CONSTANT);
+    }
+
+    public void str() {
+        expect(Lexer.Type.LITERAL);
+    }
+}
