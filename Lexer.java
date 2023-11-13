@@ -83,7 +83,7 @@ public class Lexer {
         Scanner scanner = new Scanner(System.in);
 
         while (true) {
-            System.out.println("Enter source code (Your code need to start and end with curly bracket):");
+            System.out.println("Enter source code (Your code needs to start and end with curly brackets):");
             String input = scanner.nextLine();
 
             if (input.trim().startsWith("{") && input.trim().endsWith("}")) {
@@ -93,13 +93,24 @@ public class Lexer {
                     System.out.println(t);
                 }
 
+                // Create an instance of the Parser
+                Parser parser = new Parser(tokens);
+
+                // Call the program method to start parsing
+                try {
+                    parser.program();
+                    System.out.println("Parsing successful!");
+                } catch (Error e) {
+                    System.out.println("Parsing failed: " + e.getMessage());
+                }
+
                 System.out.println("Do you want to enter another source code? (yes/no)");
                 String response = scanner.nextLine().trim().toLowerCase();
                 if (!response.equals("yes")) {
                     break;  // Exit the loop if the user doesn't want to enter another source code
                 }
             } else {
-                System.out.println("Error: Source code must start and end with a curly bracket (})");
+                System.out.println("Error: Source code must start and end with curly brackets (})");
                 System.out.println("Do you want to re-enter the source code? (yes/no)");
 
                 String response = scanner.nextLine().trim().toLowerCase();
@@ -111,123 +122,5 @@ public class Lexer {
 
         scanner.close();
     }
-}
 
-public class Parser {
-
-    private final List<Lexer.Token> tokens;
-    private int pos;
-
-    public Parser(List<Lexer.Token> tokens) {
-        this.tokens = tokens;
-        this.pos = 0;
-    }
-
-    public void error(String msg) {
-        throw new Error("Syntax error at position {pos}: {msg}");
-    }
-
-    public boolean consume(Lexer.Type t) {
-        if (tokens.get(pos).t == t) {
-            pos++;
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public void expect(Lexer.Type t) {
-        if (!consume(t)) {
-            error("Expected {t}, got {tokens.get(pos).t}");
-        }
-    }
-
-    public void program() {
-        expr();
-        expect(Lexer.Type.SEPARATOR);
-    }
-
-    public void expr() {
-        if (consume(Lexer.Type.KEYWORD, "define")) {
-            define();
-        } else if (consume(Lexer.Type.KEYWORD, "if")) {
-            ifExpr();
-        } else if (consume(Lexer.Type.KEYWORD, "while")) {
-            whileExpr();
-        } else if (consume(Lexer.Type.KEYWORD, "for")) {
-            forExpr();
-        } else if (consume(Lexer.Type.KEYWORD, "return")) {
-            returnExpr();
-        } else {
-            factor();
-        }
-    }
-
-    public void define() {
-        expect(Lexer.Type.IDENTIFIER);
-        expect(Lexer.Type.SEPARATOR);
-        expr();
-    }
-
-    public void ifExpr() {
-        expect(Lexer.Type.SEPARATOR);
-        expr();
-        expect(Lexer.Type.KEYWORD, "then");
-        expr();
-        expect(Lexer.Type.KEYWORD, "else");
-        expr();
-        expect(Lexer.Type.SEPARATOR);
-    }
-
-    public void whileExpr() {
-        expect(Lexer.Type.SEPARATOR);
-        expr();
-        expect(Lexer.Type.KEYWORD, "do");
-        expr();
-        expect(Lexer.Type.SEPARATOR);
-    }
-
-    public void forExpr() {
-        expect(Lexer.Type.IDENTIFIER);
-        expect(Lexer.Type.OPERATOR, "=");
-        expr();
-        expect(Lexer.Type.KEYWORD, "to");
-        expr();
-        expect(Lexer.Type.KEYWORD, "do");
-        expr();
-        expect(Lexer.Type.SEPARATOR);
-    }
-
-    public void returnExpr() {
-        expect(Lexer.Type.SEPARATOR);
-        expr();
-        expect(Lexer.Type.SEPARATOR);
-    }
-
-    public void factor() {
-        if (consume(Lexer.Type.IDENTIFIER)) {
-            id();
-        } else if (consume(Lexer.Type.CONSTANT)) {
-            num();
-        } else if (consume(Lexer.Type.LITERAL)) {
-            str();
-        } else if (consume(Lexer.Type.SEPARATOR, "(")) {
-            expr();
-            expect(Lexer.Type.SEPARATOR, ")");
-        } else {
-            error("Expected a factor, got {tokens.get(pos).t}");
-        }
-    }
-
-    public void id() {
-        expect(Lexer.Type.IDENTIFIER);
-    }
-
-    public void num() {
-        expect(Lexer.Type.CONSTANT);
-    }
-
-    public void str() {
-        expect(Lexer.Type.LITERAL);
-    }
 }
