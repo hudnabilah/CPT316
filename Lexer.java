@@ -87,21 +87,24 @@ public class Lexer {
             String input = scanner.nextLine();
 
             if (input.trim().startsWith("{") && input.trim().endsWith("}")) {
-                List<Token> tokens = lex(input);
+                // Lexical analysis
+                List<Lexer.Token> tokens = Lexer.lex(input);
+
+                // Display tokens
                 System.out.println("Tokens:");
-                for (Token t : tokens) {
+                for (Lexer.Token t : tokens) {
                     System.out.println(t);
                 }
 
-                // Create an instance of the Parser
+                // Parsing
                 Parser parser = new Parser(tokens);
 
-                // Call the program method to start parsing
                 try {
-                    parser.program();
-                    System.out.println("Parsing successful!");
-                } catch (Error e) {
-                    System.out.println("Parsing failed: " + e.getMessage());
+                    Parser.ASTNode root = parser.parse();
+                    System.out.println("AST:");
+                    Parser.printAST(root, 0);
+                } catch (RuntimeException e) {
+                    System.out.println(e.getMessage());
                 }
 
                 System.out.println("Do you want to enter another source code? (yes/no)");

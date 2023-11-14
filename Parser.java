@@ -3,105 +3,132 @@ package org.example;
 import java.util.List;
 
 public class Parser {
-
-    private final List<Lexer.Token> tokens;
-    private int pos;
+    private List<Lexer.Token> tokens;
+    private int currentTokenIndex;
 
     public Parser(List<Lexer.Token> tokens) {
         this.tokens = tokens;
-        this.pos = 0;
+        this.currentTokenIndex = 0;
     }
 
-    public void error(String msg) {
-        throw new Error("Syntax error at position {pos}: {msg}");
-    }
+    public static class ASTNode {
+        private String value;
+        private String type;
+        private List<ASTNode> children;
 
-    public boolean consume(Lexer.Type expectedType) {
-        if (tokens.get(pos).t == expectedType) {
-            pos++;
-            return true;
-        } else {
-            return false;
+        public ASTNode(String value, String type, List<ASTNode> children) {
+            this.value = value;
+            this.type = type;
+            this.children = children;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public List<ASTNode> getChildren() {
+            return children;
         }
     }
 
-    public boolean consume(Lexer.Type t, String expectedValue) {
-        if (tokens.get(pos).t == t && tokens.get(pos).c.equals(expectedValue)) {
-            pos++;
-            return true;
-        } else {
-            return false;
+    private void consume() {
+        if (currentTokenIndex < tokens.size()) {
+            currentTokenIndex++;
         }
     }
 
-    public void expect(Lexer.Type expectedType) {
-        if (!consume(expectedType)) {
-            error("Expected " + expectedType + ", got " + tokens.get(pos).t);
+    private Lexer.Token getCurrentToken() {
+        if (currentTokenIndex < tokens.size()) {
+            return tokens.get(currentTokenIndex);
         }
+        return null;
     }
 
-    public void expect(Lexer.Type t, String expectedValue) {
-        if (!consume(t, expectedValue)) {
-            error("Expected " + t + " with value '" + expectedValue + "', got " + tokens.get(pos).t + " with value '" + tokens.get(pos).c + "'");
+    public ASTNode parse() {
+        return parseExpression();
+    }
+
+    private ASTNode parseExpression() {
+        ASTNode termNode = parseTerm();
+        return parseExpressionPrime(termNode);
+    }
+
+    private ASTNode parseExpressionPrime(ASTNode leftNode) {
+        Lexer.Token currentToken = getCurrentToken();
+
+        if (currentToken != null && (currentToken.t == Lexer.Type.OPERATOR)) {
+            consume();
+            ASTNode termNode = parseTerm();
+            ASTNode newNode = new ASTNode(currentToken.c, "OPERATOR", List.of(leftNode, termNode));
+            return parseExpressionPrime(newNode);
         }
+
+        return leftNode;
     }
 
-    public void program() {
-        while (pos < tokens.size()) {
-            statement();
+    private ASTNode parseTerm() {
+        ASTNode factorNode = parseFactor();
+        return parseTermPrime(factorNode);
+    }
+
+    private ASTNode parseTermPrime(ASTNode leftNode) {
+        Lexer.Token currentToken = getCurrentToken();
+
+        if (currentToken != null && (currentToken.t == Lexer.Type.OPERATOR)) {
+            consume();
+            ASTNode factorNode = parseFactor();
+            ASTNode newNode = new ASTNode(currentToken.c, "OPERATOR", List.of(leftNode, factorNode));
+            return parseTermPrime(newNode);
         }
+
+        return leftNode;
     }
 
-    public void statement() {
-        if (consume(Lexer.Type.KEYWORD, "define")) {
-            define();
-        } else {
-            expr();
+    private ASTNode parseFactor() {
+        Lexer.Token currentToken = getCurrentToken();
+
+        if (currentToken != null) {
+            System.out.println("1");
+            System.out.println(currentToken.t);
+            System.out.println(currentToken.c);
+            if (currentToken.t == Lexer.Type.CONSTANT || currentToken.t == Lexer.Type.IDENTIFIER) {
+                consume();
+                System.out.println("2");
+                return new ASTNode(currentToken.c, currentToken.t.toString(), null);
+            } else if (currentToken.t == Lexer.Type.SEPARATOR && currentToken.c.equals("{")) {
+                System.out.println("3");
+                consume();
+                ASTNode expressionNode = parseExpression();
+                currentToken = getCurrentToken();  // Update the current token after parsing the expression
+                if (currentToken != null && currentToken.t == Lexer.Type.SEPARATOR && currentToken.c.equals("}")) {
+                    System.out.println("4");
+                    consume();
+                    return expressionNode;
+                } else {
+                    System.out.println("5");
+                    throw new RuntimeException("Expected closing parenthesis ')'");
+                }
+            }
         }
+
+        throw new RuntimeException("Invalid factor");
     }
 
-    public void define() {
-        expect(Lexer.Type.IDENTIFIER);
-        expect(Lexer.Type.OPERATOR, "=");
-        expr();
-        expect(Lexer.Type.SEPARATOR, ";");
-    }
-
-    public void expr() {
-        term();
-        while (consume(Lexer.Type.OPERATOR, "+")) {
-            term();
+    public static void printAST(ASTNode node, int depth) {
+        if (node != null) {
+            for (int i = 0; i < depth; ++i) {
+                System.out.print(" ");
+            }
+            System.out.println(node.getValue() + ":" + node.getType());
+            if (node.getChildren() != null) {
+                for (ASTNode child : node.getChildren()) {
+                    printAST(child, depth + 1);
+                }
+            }
         }
-    }
-
-    public void term() {
-        factor();
-        while (consume(Lexer.Type.OPERATOR, "*")) {
-            factor();
-        }
-    }
-
-    public void factor() {
-        if (consume(Lexer.Type.IDENTIFIER) || consume(Lexer.Type.CONSTANT)) {
-            // do nothing, as we have successfully consumed an identifier or constant
-        } else if (consume(Lexer.Type.SEPARATOR, "(")) {
-            expr();
-            expect(Lexer.Type.SEPARATOR, ")");
-        } else {
-            error("Expected an identifier, constant, or '(' expression ')', got " + tokens.get(pos).t);
-        }
-    }
-
-
-    public void id() {
-        expect(Lexer.Type.IDENTIFIER);
-    }
-
-    public void num() {
-        expect(Lexer.Type.CONSTANT);
-    }
-
-    public void str() {
-        expect(Lexer.Type.LITERAL);
     }
 }
