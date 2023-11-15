@@ -33,9 +33,9 @@ public class Lexer {
     }
 
     public static List<Token> lex(String input) {
-        String localKeywordPattern = "\\b(?<!\\w)(define|if|else|while|for|return|\\+|lambda|let|cond|and|or|not|begin|quote|set!)(?!\\w)\\b";
+        String localKeywordPattern = "\\b(?<!\\w)(define|end|then|if|else|while|for|return|\\+|lambda|let|cond|and|or|not|begin|quote|set!)(?!\\w)\\b";
         String localConstantPattern = "\\b\\d+\\b";
-        String localidentifierPattern = "\\b(?!define\\b|if\\b|else\\b|while\\b|for\\b|return\\b|\\+\\b|lambda\\b|let\\b|cond\\b|and\\b|or\\b|not\\b|begin\\b|quote\\b|set!\\b)[a-zA-Z]\\w*\\b";
+        String localidentifierPattern = "\\b(?!define\\b|end\\b|then\\b|if\\b|else\\b|while\\b|for\\b|return\\b|\\+\\b|lambda\\b|let\\b|cond\\b|and\\b|or\\b|not\\b|begin\\b|quote\\b|set!\\b)[a-zA-Z]\\w*\\b";
         String localliteralPattern = "\"[^\"]*\"";
         String localsymbolPattern = "[#&$@]";
         String localoperatorPattern = "\\+|-|\\*|/|%|==|!=|<|>|<=|>=|\\=";
@@ -88,6 +88,7 @@ public class Lexer {
 
             if (input.trim().startsWith("{") && input.trim().endsWith("}")) {
                 // Lexical analysis
+
                 List<Lexer.Token> tokens = Lexer.lex(input);
 
                 // Display tokens

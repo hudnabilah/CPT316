@@ -36,9 +36,7 @@ public class Parser {
     }
 
     private void consume() {
-        if (currentTokenIndex < tokens.size()) {
-            currentTokenIndex++;
-        }
+        currentTokenIndex++;
     }
 
     private Lexer.Token getCurrentToken() {
@@ -60,10 +58,19 @@ public class Parser {
     private ASTNode parseExpressionPrime(ASTNode leftNode) {
         Lexer.Token currentToken = getCurrentToken();
 
-        if (currentToken != null && (currentToken.t == Lexer.Type.OPERATOR)) {
+        // Skip over whitespace
+        while (currentToken != null && currentToken.c.equals(" ")) {
+            consume();
+            currentToken = getCurrentToken();
+        }
+
+        if (currentToken != null && (currentToken.t == Lexer.Type.CONSTANT || currentToken.t == Lexer.Type.IDENTIFIER
+                || currentToken.t == Lexer.Type.KEYWORD || currentToken.t == Lexer.Type.LITERAL
+                || currentToken.t == Lexer.Type.SYMBOL || currentToken.t == Lexer.Type.OPERATOR
+                || (currentToken.t == Lexer.Type.SEPARATOR && !currentToken.c.equals("{") && !currentToken.c.equals("}")))) {
             consume();
             ASTNode termNode = parseTerm();
-            ASTNode newNode = new ASTNode(currentToken.c, "OPERATOR", List.of(leftNode, termNode));
+            ASTNode newNode = new ASTNode(currentToken.c, currentToken.t.toString(), List.of(leftNode, termNode));
             return parseExpressionPrime(newNode);
         }
 
@@ -78,10 +85,19 @@ public class Parser {
     private ASTNode parseTermPrime(ASTNode leftNode) {
         Lexer.Token currentToken = getCurrentToken();
 
-        if (currentToken != null && (currentToken.t == Lexer.Type.OPERATOR)) {
+        // Skip over whitespace
+        while (currentToken != null && currentToken.c.equals(" ")) {
+            consume();
+            currentToken = getCurrentToken();
+        }
+
+        if (currentToken != null && (currentToken.t == Lexer.Type.CONSTANT || currentToken.t == Lexer.Type.IDENTIFIER
+                || currentToken.t == Lexer.Type.KEYWORD || currentToken.t == Lexer.Type.LITERAL
+                || currentToken.t == Lexer.Type.SYMBOL || currentToken.t == Lexer.Type.OPERATOR
+                || (currentToken.t == Lexer.Type.SEPARATOR && !currentToken.c.equals("{") && !currentToken.c.equals("}")))) {
             consume();
             ASTNode factorNode = parseFactor();
-            ASTNode newNode = new ASTNode(currentToken.c, "OPERATOR", List.of(leftNode, factorNode));
+            ASTNode newNode = new ASTNode(currentToken.c, currentToken.t.toString(), List.of(leftNode, factorNode));
             return parseTermPrime(newNode);
         }
 
@@ -91,28 +107,15 @@ public class Parser {
     private ASTNode parseFactor() {
         Lexer.Token currentToken = getCurrentToken();
 
+        // Skip over whitespace
+        while (currentToken != null && currentToken.c.equals(" ")) {
+            consume();
+            currentToken = getCurrentToken();
+        }
+
         if (currentToken != null) {
-            System.out.println("1");
-            System.out.println(currentToken.t);
-            System.out.println(currentToken.c);
-            if (currentToken.t == Lexer.Type.CONSTANT || currentToken.t == Lexer.Type.IDENTIFIER) {
-                consume();
-                System.out.println("2");
-                return new ASTNode(currentToken.c, currentToken.t.toString(), null);
-            } else if (currentToken.t == Lexer.Type.SEPARATOR && currentToken.c.equals("{")) {
-                System.out.println("3");
-                consume();
-                ASTNode expressionNode = parseExpression();
-                currentToken = getCurrentToken();  // Update the current token after parsing the expression
-                if (currentToken != null && currentToken.t == Lexer.Type.SEPARATOR && currentToken.c.equals("}")) {
-                    System.out.println("4");
-                    consume();
-                    return expressionNode;
-                } else {
-                    System.out.println("5");
-                    throw new RuntimeException("Expected closing parenthesis ')'");
-                }
-            }
+            consume();
+            return new ASTNode(currentToken.c, currentToken.t.toString(), null);
         }
 
         throw new RuntimeException("Invalid factor");
@@ -121,7 +124,7 @@ public class Parser {
     public static void printAST(ASTNode node, int depth) {
         if (node != null) {
             for (int i = 0; i < depth; ++i) {
-                System.out.print(" ");
+                System.out.print("\t");
             }
             System.out.println(node.getValue() + ":" + node.getType());
             if (node.getChildren() != null) {
