@@ -83,14 +83,28 @@ public class Lexer {
         Scanner scanner = new Scanner(System.in);
 
         while (true) {
-            System.out.println("Enter source code (Your code need to start and end with curly bracket):");
+            System.out.println("Enter source code (Your code needs to start and end with curly brackets):");
             String input = scanner.nextLine();
 
             if (input.trim().startsWith("{") && input.trim().endsWith("}")) {
-                List<Token> tokens = lex(input);
+                // Lexical analysis
+                List<Lexer.Token> tokens = Lexer.lex(input);
+
+                // Display tokens
                 System.out.println("Tokens:");
-                for (Token t : tokens) {
+                for (Lexer.Token t : tokens) {
                     System.out.println(t);
+                }
+
+                // Parsing
+                Parser parser = new Parser(tokens);
+
+                try {
+                    Parser.ASTNode root = parser.parse();
+                    System.out.println("AST:");
+                    Parser.printAST(root, 0);
+                } catch (RuntimeException e) {
+                    System.out.println(e.getMessage());
                 }
 
                 System.out.println("Do you want to enter another source code? (yes/no)");
@@ -99,7 +113,7 @@ public class Lexer {
                     break;  // Exit the loop if the user doesn't want to enter another source code
                 }
             } else {
-                System.out.println("Error: Source code must start and end with a curly bracket (})");
+                System.out.println("Error: Source code must start and end with curly brackets (})");
                 System.out.println("Do you want to re-enter the source code? (yes/no)");
 
                 String response = scanner.nextLine().trim().toLowerCase();
@@ -111,4 +125,5 @@ public class Lexer {
 
         scanner.close();
     }
+
 }
