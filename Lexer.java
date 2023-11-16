@@ -49,7 +49,7 @@ public class Lexer {
         String localliteralPattern = "\"[^\"]*\"";
         String localsymbolPattern = "[#@]";
         String localoperatorPattern = "\\+|-|\\*|/|%|==|!=|<|>|<=|>=|\\=";
-        String localseparatorPattern = "\\(|\\)|\\{|\\}";
+        String localseparatorPattern = "\\(|\\)|\\{|\\}|;";
 
         // Combine patterns into a single regex for each language construct
         String combinedPattern = String.format("(%s)|(%s)|(%s)|(%s)|(%s)|(%s)|(%s)",
@@ -62,6 +62,7 @@ public class Lexer {
         List<Token> tokens = new ArrayList<>();
         String lastTokenType = null;
 
+        boolean semicolonEncountered=false;
         while (matcher.find()) {
             String matchedGroup = matcher.group();
             Type type = null;
@@ -84,14 +85,22 @@ public class Lexer {
                 throw new RuntimeException("Invalid input at position " + matcher.start());
             }
 
+            if (matchedGroup.equals(";")) {
+                semicolonEncountered = true;
+            }
+
             // Rule 1: Check if operators are used correctly between two identifiers
             if (type == Type.OPERATOR) {
                 if (lastTokenType == null || (!lastTokenType.equals(Type.IDENTIFIER.toString()) && !lastTokenType.equals(Type.CONSTANT.toString()))) {
                     throw new RuleViolationException("Rule 1 violation: Operator must be used between two identifiers");
                 }
 
-                // Check the token after the operator
+                // Check the token after the operator, skipping whitespaces
                 int nextTokenIndex = matcher.end();
+                while (nextTokenIndex < input.length() && Character.isWhitespace(input.charAt(nextTokenIndex))) {
+                    nextTokenIndex++;
+                }
+
                 if (nextTokenIndex < input.length()) {
                     String nextToken = input.substring(nextTokenIndex, nextTokenIndex + 1);
                     Type nextTokenType = null;
@@ -123,7 +132,10 @@ public class Lexer {
             tokens.add(new Token(type, matchedGroup));
             lastTokenType = type.toString();
         }
-
+        // Check if the input ends with a semicolon before the closing curly brace '}'
+        if (!semicolonEncountered && input.matches(".*;\\s*\\}")) {
+            throw new RuleViolationException("Rule 7 violation: Semicolon is required at the end before the closing curly brace '}'");
+        }
         return tokens;
     }
 
