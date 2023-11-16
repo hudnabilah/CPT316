@@ -47,12 +47,12 @@ public class Parser {
     }
 
     public ASTNode parse() {
-        ASTNode leftNode = parseFactor();
-        ASTNode result = parseExpressionPrime(leftNode);
+        ASTNode leftNode = parseChild();
+        ASTNode result = parseNode(leftNode);
         return result;
     }
 
-    private ASTNode parseExpressionPrime(ASTNode leftNode) {
+    private ASTNode parseNode(ASTNode leftNode) {
         Lexer.Token currentToken = getCurrentToken();
 
         // Skip over whitespace
@@ -66,15 +66,15 @@ public class Parser {
                 || currentToken.t == Lexer.Type.SYMBOL || currentToken.t == Lexer.Type.OPERATOR
                 || (currentToken.t == Lexer.Type.SEPARATOR && !currentToken.c.equals("{")))) {
             consume();
-            ASTNode factorNode = parseFactor();
+            ASTNode factorNode = parseChild();
             ASTNode newNode = new ASTNode(currentToken.c, currentToken.t.toString(), List.of(leftNode, factorNode));
-            return parseExpressionPrime(newNode);
+            return parseNode(newNode);
         }
 
         return leftNode;
     }
 
-    private ASTNode parseFactor() {
+    private ASTNode parseChild() {
         Lexer.Token currentToken = getCurrentToken();
 
         // Skip over whitespace
