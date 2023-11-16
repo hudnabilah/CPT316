@@ -47,7 +47,6 @@ public class Parser {
     }
 
     public ASTNode parse() {
-        Lexer.Token startToken = getCurrentToken();
         ASTNode result = parseExpression();
         return result;
     }
