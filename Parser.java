@@ -47,7 +47,10 @@ public class Parser {
     }
 
     public ASTNode parse() {
-        return parseExpression();
+        Lexer.Token startToken = getCurrentToken();
+        consume(); // Skip '{'
+        ASTNode result = parseExpression();
+        return result;
     }
 
     private ASTNode parseExpression() {
@@ -113,7 +116,7 @@ public class Parser {
             currentToken = getCurrentToken();
         }
 
-        if (currentToken != null) {
+        if (currentToken != null && currentToken.c != "}") {
             consume();
             return new ASTNode(currentToken.c, currentToken.t.toString(), null);
         }
