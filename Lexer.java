@@ -1,5 +1,6 @@
 package org.example;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -46,7 +47,7 @@ public class Lexer {
         String localConstantPattern = "\\b\\d+\\b";
         String localidentifierPattern = "\\b(?!return\\b)[a-zA-Z]\\w*\\b";
         String localliteralPattern = "\"[^\"]*\"";
-        String localsymbolPattern = "[#&$@]";
+        String localsymbolPattern = "[#@]";
         String localoperatorPattern = "\\+|-|\\*|/|%|==|!=|<|>|<=|>=|\\=";
         String localseparatorPattern = "\\(|\\)|\\{|\\}";
 
@@ -85,8 +86,25 @@ public class Lexer {
 
             // Rule 1: Check if operators are used correctly between two identifiers
             if (type == Type.OPERATOR) {
-                if (lastTokenType == null || !lastTokenType.equals(Type.IDENTIFIER.toString())) {
+                if (lastTokenType == null || (!lastTokenType.equals(Type.IDENTIFIER.toString()) && !lastTokenType.equals(Type.CONSTANT.toString()))) {
                     throw new RuleViolationException("Rule 1 violation: Operator must be used between two identifiers");
+                }
+
+                // Check the token after the operator
+                int nextTokenIndex = matcher.end();
+                if (nextTokenIndex < input.length()) {
+                    String nextToken = input.substring(nextTokenIndex, nextTokenIndex + 1);
+                    Type nextTokenType = null;
+
+                    if (nextToken.matches(localidentifierPattern)) {
+                        nextTokenType = Type.IDENTIFIER;
+                    } else if (nextToken.matches(localConstantPattern)) {
+                        nextTokenType = Type.CONSTANT;
+                    }
+
+                    if (nextTokenType == null || (!nextTokenType.equals(Type.IDENTIFIER) && !nextTokenType.equals(Type.CONSTANT))) {
+                        throw new RuleViolationException("Rule 1 violation: Operator must be used between two identifiers");
+                    }
                 }
             }
 
@@ -95,9 +113,11 @@ public class Lexer {
                 throw new RuleViolationException("Rule 2 violation: Two consecutive tokens of the same type are not allowed");
             }
 
-            // Rule 3: Check if literals are used only in assignment operations
-            if (type == Type.LITERAL && !(lastTokenType != null && lastTokenType.equals(Type.OPERATOR.toString()))) {
-                throw new RuleViolationException("Rule 3 violation: Literals can only be used in assignment operations");
+            // Rule 3: Check if literals/constants are used only in assignment and return operations
+            if ((type == Type.LITERAL || type == Type.CONSTANT)
+                    && !(lastTokenType != null && (lastTokenType.equals(Type.OPERATOR.toString()) || lastTokenType.equals(Type.KEYWORD.toString())
+                    || lastTokenType.equals(Type.KEYWORD.toString() + "<return>")) && !matchedGroup.equals("return"))) {
+                throw new RuleViolationException("Rule 3 violation: Literals/Constants can only be used in assignment and return operations");
             }
 
             tokens.add(new Token(type, matchedGroup));
@@ -135,6 +155,7 @@ public class Lexer {
             // Ignore other characters
         }
 
+
         // Ensure the stack is empty (all opening brackets were closed)
         return stack.isEmpty();
     }
@@ -145,16 +166,16 @@ public class Lexer {
         while (true) {
             System.out.println("Enter source code (Your code needs to start and end with curly brackets):");
             String input = scanner.nextLine();
-
             if (isValidSourceCode(input)) {
                 try {
                     // Lexical analysis
                     List<Lexer.Token> tokens = Lexer.lex(input);
-
+                    int maxIndex=0;
                     // Display tokens
-                    System.out.println("Tokens:");
+                    System.out.println("----------------------------\nTokens:");
                     for (Lexer.Token t : tokens) {
                         System.out.println(t);
+                        maxIndex++;
                     }
 
                     // Parsing
@@ -162,7 +183,7 @@ public class Lexer {
 
                     try {
                         Parser.ASTNode root = parser.parse();
-                        System.out.println("AST:");
+                        System.out.println("----------------------------\nAST:");
                         Parser.printAST(root, 0);
                     } catch (RuntimeException e) {
                         System.out.println(e.getMessage());
