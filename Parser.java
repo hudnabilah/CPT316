@@ -47,13 +47,9 @@ public class Parser {
     }
 
     public ASTNode parse() {
-        ASTNode result = parseExpression();
-        return result;
-    }
-
-    private ASTNode parseExpression() {
         ASTNode leftNode = parseFactor();
-        return parseExpressionPrime(leftNode);
+        ASTNode result = parseExpressionPrime(leftNode);
+        return result;
     }
 
     private ASTNode parseExpressionPrime(ASTNode leftNode) {
@@ -68,7 +64,7 @@ public class Parser {
         if (currentToken != null && (currentToken.t == Lexer.Type.CONSTANT || currentToken.t == Lexer.Type.IDENTIFIER
                 || currentToken.t == Lexer.Type.KEYWORD || currentToken.t == Lexer.Type.LITERAL
                 || currentToken.t == Lexer.Type.SYMBOL || currentToken.t == Lexer.Type.OPERATOR
-                || (currentToken.t == Lexer.Type.SEPARATOR && !currentToken.c.equals("{") && !currentToken.c.equals("}")))) {
+                || (currentToken.t == Lexer.Type.SEPARATOR && !currentToken.c.equals("{")))) {
             consume();
             ASTNode factorNode = parseFactor();
             ASTNode newNode = new ASTNode(currentToken.c, currentToken.t.toString(), List.of(leftNode, factorNode));
@@ -92,7 +88,10 @@ public class Parser {
             return new ASTNode(currentToken.c, currentToken.t.toString(), null);
         }
 
-        throw new RuntimeException("Invalid factor");
+        else{
+            return new ASTNode("","",null);
+        }
+
     }
 
     public static void printAST(ASTNode node, int depth) {
@@ -100,12 +99,16 @@ public class Parser {
             for (int i = 0; i < depth; ++i) {
                 System.out.print("\t");
             }
-            System.out.println(node.getValue() + ":" + node.getType());
-            if (node.getChildren() != null) {
-                for (ASTNode child : node.getChildren()) {
-                    printAST(child, depth + 1);
+            if(node.getType()!="") {
+                System.out.println(node.getValue() + ":" + node.getType());
+                if (node.getChildren() != null) {
+                    for (ASTNode child : node.getChildren()) {
+                        printAST(child, depth + 1);
+                    }
                 }
             }
+            else
+                System.out.print("\n");
         }
     }
 }

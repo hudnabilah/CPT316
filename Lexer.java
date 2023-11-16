@@ -1,6 +1,5 @@
 package org.example;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Scanner;
