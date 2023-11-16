@@ -53,8 +53,8 @@ public class Parser {
     }
 
     private ASTNode parseExpression() {
-        ASTNode termNode = parseTerm();
-        return parseExpressionPrime(termNode);
+        ASTNode leftNode = parseFactor();
+        return parseExpressionPrime(leftNode);
     }
 
     private ASTNode parseExpressionPrime(ASTNode leftNode) {
@@ -71,36 +71,9 @@ public class Parser {
                 || currentToken.t == Lexer.Type.SYMBOL || currentToken.t == Lexer.Type.OPERATOR
                 || (currentToken.t == Lexer.Type.SEPARATOR && !currentToken.c.equals("{") && !currentToken.c.equals("}")))) {
             consume();
-            ASTNode termNode = parseTerm();
-            ASTNode newNode = new ASTNode(currentToken.c, currentToken.t.toString(), List.of(leftNode, termNode));
-            return parseExpressionPrime(newNode);
-        }
-
-        return leftNode;
-    }
-
-    private ASTNode parseTerm() {
-        ASTNode factorNode = parseFactor();
-        return parseTermPrime(factorNode);
-    }
-
-    private ASTNode parseTermPrime(ASTNode leftNode) {
-        Lexer.Token currentToken = getCurrentToken();
-
-        // Skip over whitespace
-        while (currentToken != null && currentToken.c.equals(" ")) {
-            consume();
-            currentToken = getCurrentToken();
-        }
-
-        if (currentToken != null && (currentToken.t == Lexer.Type.CONSTANT || currentToken.t == Lexer.Type.IDENTIFIER
-                || currentToken.t == Lexer.Type.KEYWORD || currentToken.t == Lexer.Type.LITERAL
-                || currentToken.t == Lexer.Type.SYMBOL || currentToken.t == Lexer.Type.OPERATOR
-                || (currentToken.t == Lexer.Type.SEPARATOR && !currentToken.c.equals("{") && !currentToken.c.equals("}")))) {
-            consume();
             ASTNode factorNode = parseFactor();
             ASTNode newNode = new ASTNode(currentToken.c, currentToken.t.toString(), List.of(leftNode, factorNode));
-            return parseTermPrime(newNode);
+            return parseExpressionPrime(newNode);
         }
 
         return leftNode;
