@@ -123,6 +123,7 @@ public class Parser {
             for (int i = 0; i < depth; ++i) {
                 indent.append("  ");
             }
+
             // Print the value and type of the node
             System.out.printf("%s%-15s%s\n", indent.toString(), node.getType(), node.getValue());
             if (node.getChildren() != null) {
