@@ -48,16 +48,17 @@ public class Lexer {
         // Define regex patterns for different language constructs
         String localKeywordPattern = "\\b(return)\\b";
         String localConstantPattern = "\\b\\d+\\b";
-        String localidentifierPattern = "\\b(?!return\\b)[a-zA-Z]\\w*\\b";
-        String localliteralPattern = "\"[^\"]*\"";
-        String localsymbolPattern = "[#@]";
-        String localoperatorPattern = "\\+|-|\\*|/|%|==|!=|<|>|<=|>=|=";
-        String localseparatorPattern = "\\(|\\)|\\{|\\}|;";
+        String localIdentifierPattern = "\\b(?!return\\b)[a-zA-Z]\\w*\\b";
+        String localLiteralPattern = "\"[^\"]*\"";
+        String localSymbolPattern = "[#@]";
+        String localOperatorPattern = "\\+|-|\\*|/|%|==|!=|<|>|<=|>=|=";
+        String localSeparatorPattern = "\\(|\\)|\\{|\\}|;";
+        String localIllegalCharacterPattern = ".";
 
         // Combine patterns into a single regex for each language construct
-        String combinedPattern = String.format("(%s)|(%s)|(%s)|(%s)|(%s)|(%s)|(%s)",
-                localKeywordPattern, localConstantPattern, localidentifierPattern,
-                localliteralPattern, localsymbolPattern, localoperatorPattern, localseparatorPattern);
+        String combinedPattern = String.format("(%s)|(%s)|(%s)|(%s)|(%s)|(%s)|(%s)|(%s)",
+                localKeywordPattern, localConstantPattern, localIdentifierPattern, localLiteralPattern,
+                localSymbolPattern, localOperatorPattern, localSeparatorPattern, localIllegalCharacterPattern);
 
         // Compile the combined regex pattern
         Pattern combinedPatternCompiled = Pattern.compile(combinedPattern);
@@ -67,37 +68,35 @@ public class Lexer {
         String lastTokenType = null;
 
         boolean semicolonEncountered = false;
+
         while (matcher.find()) {
+
             String matchedGroup = matcher.group();
             Type type = null;
+
             // Determine the type of the matched group based on the patterns
             if (matchedGroup.matches(localKeywordPattern)) {
                 type = Type.KEYWORD;
             } else if (matchedGroup.matches(localConstantPattern)) {
                 type = Type.CONSTANT;
-            } else if (matchedGroup.matches(localidentifierPattern)) {
+            } else if (matchedGroup.matches(localIdentifierPattern)) {
                 type = Type.IDENTIFIER;
-            } else if (matchedGroup.matches(localliteralPattern)) {
+            } else if (matchedGroup.matches(localLiteralPattern)) {
                 type = Type.LITERAL;
-            } else if (matchedGroup.matches(localsymbolPattern)) {
+            } else if (matchedGroup.matches(localSymbolPattern)) {
                 type = Type.SYMBOL;
-            } else if (matchedGroup.matches(localoperatorPattern)) {
+            } else if (matchedGroup.matches(localOperatorPattern)) {
                 type = Type.OPERATOR;
-            } else if (matchedGroup.matches(localseparatorPattern)) {
+            } else if (matchedGroup.matches(localSeparatorPattern)) {
                 type = Type.SEPARATOR;
+            } else if (matchedGroup.matches(localIllegalCharacterPattern)){
+                System.out.println("Illegal Character");
             }
-//            else{
-//                throw new RuntimeException("Token type is empty for input at position " + matcher.start());
-//            }
-
-            //Check if the type is empty and throw an error
-//            if (type != Type.KEYWORD||type!= Type.CONSTANT ||type!= Type.IDENTIFIER||type!= Type.LITERAL||type!= Type.SYMBOL||type!= Type.OPERATOR||type!= Type.SEPARATOR) {
-//                throw new RuntimeException("Token type is empty for input at position " + matcher.start());
-//            }
 
             if (matchedGroup.equals(";")) {
                 semicolonEncountered = true;
             }
+
 
             // Rule 1: Check if operators are used correctly between two identifiers
             if (type == Type.OPERATOR) {
@@ -116,14 +115,13 @@ public class Lexer {
                     String nextToken = input.substring(nextTokenIndex, nextTokenIndex + 1);
                     Type nextTokenType = null;
 
-                    if (nextToken.matches(localidentifierPattern)) {
+                    if (nextToken.matches(localIdentifierPattern)) {
                         nextTokenType = Type.IDENTIFIER;
                     } else if (nextToken.matches(localConstantPattern)) {
                         nextTokenType = Type.CONSTANT;
                     }
 
-                    if (nextTokenType == null || (!nextTokenType.equals(Type.IDENTIFIER)
-                            && !nextTokenType.equals(Type.CONSTANT))) {
+                    if (nextTokenType == null || (!nextTokenType.equals(Type.IDENTIFIER) && !nextTokenType.equals(Type.CONSTANT))) {
                         throw new RuleViolationException("Rule 1 violation: Operator must be used between two identifiers");
                     }
                 }
@@ -145,6 +143,7 @@ public class Lexer {
             tokens.add(new Token(type, matchedGroup));
             lastTokenType = type.toString();
         }
+
         // Rule 4: Check if the input ends with a semicolon before the closing curly brace '}'
         if (!semicolonEncountered) {
             int lastSemicolonIndex = input.lastIndexOf(';');
@@ -154,6 +153,7 @@ public class Lexer {
                 throw new RuleViolationException("Rule 4 Violation: Semicolon is required at the end before the closing curly brace '}'");
             }
         }
+
         return tokens;
     }
 
@@ -246,7 +246,7 @@ public class Lexer {
                 if (!response.equals("yes")) {
                     break;  // Exit the loop if the user doesn't want to re-enter the source code
                 }else {
-                clearConsole();}
+                    clearConsole();}
             }
         }
 
