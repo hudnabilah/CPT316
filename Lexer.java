@@ -1,6 +1,5 @@
 package org.example;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -9,9 +8,9 @@ import java.util.regex.Pattern;
 import java.util.Map;
 import java.util.HashMap;
 
-
 public class Lexer {
 
+    // Enumeration for different token types
     public enum Type {
         KEYWORD,
         CONSTANT,
@@ -22,6 +21,7 @@ public class Lexer {
         SEPARATOR
     }
 
+    // Token class to represent a token with type and content
     public static class Token {
         public final Type t;
         public final String c;
@@ -36,13 +36,16 @@ public class Lexer {
         }
     }
 
+    // Custom exception to handle rule violations during lexical analysis
     public static class RuleViolationException extends RuntimeException {
         public RuleViolationException(String message) {
             super(message);
         }
     }
 
+    // Lexical analysis function
     public static List<Token> lex(String input) {
+        // Define regex patterns for different language constructs
         String localKeywordPattern = "\\b(return)\\b";
         String localConstantPattern = "\\b\\d+\\b";
         String localidentifierPattern = "\\b(?!return\\b)[a-zA-Z]\\w*\\b";
@@ -56,17 +59,19 @@ public class Lexer {
                 localKeywordPattern, localConstantPattern, localidentifierPattern,
                 localliteralPattern, localsymbolPattern, localoperatorPattern, localseparatorPattern);
 
+        // Compile the combined regex pattern
         Pattern combinedPatternCompiled = Pattern.compile(combinedPattern);
         Matcher matcher = combinedPatternCompiled.matcher(input);
 
         List<Token> tokens = new ArrayList<>();
         String lastTokenType = null;
 
-        boolean semicolonEncountered=false;
+        boolean semicolonEncountered = false;
         while (matcher.find()) {
             String matchedGroup = matcher.group();
             Type type = null;
 
+            // Determine the type of the matched group based on the patterns
             if (matchedGroup.matches(localKeywordPattern)) {
                 type = Type.KEYWORD;
             } else if (matchedGroup.matches(localConstantPattern)) {
@@ -91,7 +96,8 @@ public class Lexer {
 
             // Rule 1: Check if operators are used correctly between two identifiers
             if (type == Type.OPERATOR) {
-                if (lastTokenType == null || (!lastTokenType.equals(Type.IDENTIFIER.toString()) && !lastTokenType.equals(Type.CONSTANT.toString()))) {
+                if (lastTokenType == null || (!lastTokenType.equals(Type.IDENTIFIER.toString())
+                        && !lastTokenType.equals(Type.CONSTANT.toString()))) {
                     throw new RuleViolationException("Rule 1 violation: Operator must be used between two identifiers");
                 }
 
@@ -111,7 +117,8 @@ public class Lexer {
                         nextTokenType = Type.CONSTANT;
                     }
 
-                    if (nextTokenType == null || (!nextTokenType.equals(Type.IDENTIFIER) && !nextTokenType.equals(Type.CONSTANT))) {
+                    if (nextTokenType == null || (!nextTokenType.equals(Type.IDENTIFIER)
+                            && !nextTokenType.equals(Type.CONSTANT))) {
                         throw new RuleViolationException("Rule 1 violation: Operator must be used between two identifiers");
                     }
                 }
@@ -124,7 +131,8 @@ public class Lexer {
 
             // Rule 3: Check if literals/constants are used only in assignment and return operations
             if ((type == Type.LITERAL || type == Type.CONSTANT)
-                    && !(lastTokenType != null && (lastTokenType.equals(Type.OPERATOR.toString()) || lastTokenType.equals(Type.KEYWORD.toString())
+                    && !(lastTokenType != null && (lastTokenType.equals(Type.OPERATOR.toString())
+                    || lastTokenType.equals(Type.KEYWORD.toString())
                     || lastTokenType.equals(Type.KEYWORD.toString() + "<return>")) && !matchedGroup.equals("return"))) {
                 throw new RuleViolationException("Rule 3 violation: Literals/Constants can only be used in assignment and return operations");
             }
@@ -132,13 +140,11 @@ public class Lexer {
             tokens.add(new Token(type, matchedGroup));
             lastTokenType = type.toString();
         }
-        // Check if the input ends with a semicolon before the closing curly brace '}'
-        if (!semicolonEncountered && input.matches(".*;\\s*\\}")) {
-            throw new RuleViolationException("Rule 7 violation: Semicolon is required at the end before the closing curly brace '}'");
-        }
+
         return tokens;
     }
 
+    // Function to check if the source code is valid
     private static boolean isValidSourceCode(String code) {
         code = code.trim();
 
@@ -167,11 +173,11 @@ public class Lexer {
             // Ignore other characters
         }
 
-
         // Ensure the stack is empty (all opening brackets were closed)
         return stack.isEmpty();
     }
 
+    // Main function to take user input, perform lexical analysis, and display tokens and AST
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
@@ -182,12 +188,11 @@ public class Lexer {
                 try {
                     // Lexical analysis
                     List<Lexer.Token> tokens = Lexer.lex(input);
-                    int maxIndex=0;
+
                     // Display tokens
                     System.out.println("----------------------------\nTokens:");
                     for (Lexer.Token t : tokens) {
                         System.out.println(t);
-                        maxIndex++;
                     }
 
                     // Parsing
