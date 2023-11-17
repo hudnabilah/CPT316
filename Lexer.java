@@ -51,7 +51,7 @@ public class Lexer {
         String localidentifierPattern = "\\b(?!return\\b)[a-zA-Z]\\w*\\b";
         String localliteralPattern = "\"[^\"]*\"";
         String localsymbolPattern = "[#@]";
-        String localoperatorPattern = "\\+|-|\\*|/|%|==|!=|<|>|<=|>=|\\=";
+        String localoperatorPattern = "\\+|-|\\*|/|%|==|!=|<|>|<=|>=|=";
         String localseparatorPattern = "\\(|\\)|\\{|\\}|;";
 
         // Combine patterns into a single regex for each language construct
@@ -70,7 +70,6 @@ public class Lexer {
         while (matcher.find()) {
             String matchedGroup = matcher.group();
             Type type = null;
-
             // Determine the type of the matched group based on the patterns
             if (matchedGroup.matches(localKeywordPattern)) {
                 type = Type.KEYWORD;
@@ -86,9 +85,15 @@ public class Lexer {
                 type = Type.OPERATOR;
             } else if (matchedGroup.matches(localseparatorPattern)) {
                 type = Type.SEPARATOR;
-            } else {
-                throw new RuntimeException("Invalid input at position " + matcher.start());
             }
+//            else{
+//                throw new RuntimeException("Token type is empty for input at position " + matcher.start());
+//            }
+
+            //Check if the type is empty and throw an error
+//            if (type != Type.KEYWORD||type!= Type.CONSTANT ||type!= Type.IDENTIFIER||type!= Type.LITERAL||type!= Type.SYMBOL||type!= Type.OPERATOR||type!= Type.SEPARATOR) {
+//                throw new RuntimeException("Token type is empty for input at position " + matcher.start());
+//            }
 
             if (matchedGroup.equals(";")) {
                 semicolonEncountered = true;
@@ -140,7 +145,15 @@ public class Lexer {
             tokens.add(new Token(type, matchedGroup));
             lastTokenType = type.toString();
         }
+        // Rule 4: Check if the input ends with a semicolon before the closing curly brace '}'
+        if (!semicolonEncountered) {
+            int lastSemicolonIndex = input.lastIndexOf(';');
+            int lastCurlyBraceIndex = input.lastIndexOf('}');
 
+            if (lastSemicolonIndex < lastCurlyBraceIndex) {
+                throw new RuleViolationException("Rule 4 Violation: Semicolon is required at the end before the closing curly brace '}'");
+            }
+        }
         return tokens;
     }
 
@@ -192,25 +205,29 @@ public class Lexer {
                     // Display tokens
                     System.out.println("----------------------------\nTokens:");
                     for (Lexer.Token t : tokens) {
-                        System.out.println(t);
+                        System.out.printf("%-15s%s\n", t.t, t.c);
                     }
 
                     // Parsing
+
                     Parser parser = new Parser(tokens);
 
                     try {
                         Parser.ASTNode root = parser.parse();
-                        System.out.println("----------------------------\nAST:");
+                        System.out.println("----------------------------\nAbstract Syntax Tree (AST):");
                         Parser.printAST(root, 0);
                     } catch (RuntimeException e) {
                         System.out.println(e.getMessage());
                     }
 
-                    System.out.println("Do you want to enter another source code? (yes/no)");
+                    System.out.println("----------------------------\nDo you want to enter another source code? (yes/no)");
                     String response = scanner.nextLine().trim().toLowerCase();
                     if (!response.equals("yes")) {
                         break;  // Exit the loop if the user doesn't want to enter another source code
                     }
+                    else {
+                        clearConsole();}
+
                 } catch (RuleViolationException e) {
                     System.out.println("Rule Violation: " + e.getMessage());
                     System.out.println("Do you want to re-enter the source code? (yes/no)");
@@ -218,19 +235,26 @@ public class Lexer {
                     String response = scanner.nextLine().trim().toLowerCase();
                     if (!response.equals("yes")) {
                         break;  // Exit the loop if the user doesn't want to re-enter the source code
-                    }
+                    }else {
+                        clearConsole();}
                 }
             } else {
                 System.out.println("Error: Source code must start and end with curly brackets (})");
-                System.out.println("Do you want to re-enter the source code? (yes/no)");
+                System.out.println("----------------------------\nDo you want to re-enter the source code? (yes/no)");
 
                 String response = scanner.nextLine().trim().toLowerCase();
                 if (!response.equals("yes")) {
                     break;  // Exit the loop if the user doesn't want to re-enter the source code
-                }
+                }else {
+                clearConsole();}
             }
         }
 
         scanner.close();
+    }
+    private static void clearConsole() {
+        for (int i = 0; i < 50; i++) {
+            System.out.println(); // Print empty lines to "clear" the console
+        }
     }
 }
