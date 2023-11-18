@@ -3,11 +3,9 @@ package org.example;
 import java.util.List;
 
 public class Parser {
-    // Member variables to store the list of tokens and the current index during parsing
     private List<Lexer.Token> tokens;
     private int currentTokenIndex;
 
-    // Constructor to initialize the Parser with a list of tokens
     public Parser(List<Lexer.Token> tokens) {
         this.tokens = tokens;
         this.currentTokenIndex = 0;
@@ -19,14 +17,12 @@ public class Parser {
         private String type;
         private List<ASTNode> children;
 
-        // Constructor to create an ASTNode with a value, type, and children
         public ASTNode(String value, String type, List<ASTNode> children) {
             this.value = value;
             this.type = type;
             this.children = children;
         }
 
-        // Getter methods for retrieving the value, type, and children of the node
         public String getValue() {
             return value;
         }
@@ -40,17 +36,12 @@ public class Parser {
         }
     }
 
-    // Move to the next token in the token list
     private void consume() {
         currentTokenIndex++;
     }
 
-    // Get the current token without moving to the next one
     private Lexer.Token getCurrentToken() {
-        if (currentTokenIndex < tokens.size()) {
-            return tokens.get(currentTokenIndex);
-        }
-        return null;
+        return (currentTokenIndex < tokens.size()) ? tokens.get(currentTokenIndex) : null;
     }
 
     // Parse the input and build the abstract syntax tree (AST)
@@ -58,8 +49,7 @@ public class Parser {
         // Start the parsing process with the first child
         ASTNode leftNode = parseChild();
         // Parse the entire expression and return the resulting AST
-        ASTNode result = parseNode(leftNode);
-        return result;
+        return parseNode(leftNode);
     }
 
     // Parse a node in the AST
@@ -74,10 +64,7 @@ public class Parser {
         }
 
         // Check if the current token is of a valid type for a node
-        if (currentToken != null && (currentToken.t == Lexer.Type.CONSTANT || currentToken.t == Lexer.Type.IDENTIFIER
-                || currentToken.t == Lexer.Type.KEYWORD || currentToken.t == Lexer.Type.LITERAL
-                || currentToken.t == Lexer.Type.SYMBOL || currentToken.t == Lexer.Type.OPERATOR
-                || (currentToken.t == Lexer.Type.SEPARATOR && !currentToken.c.equals("{")))) {
+        if (currentToken != null && isValidTokenTypeForNode(currentToken.t)) {
             // Consume the current token and parse the next child
             consume();
             ASTNode factorNode = parseChild();
@@ -110,9 +97,15 @@ public class Parser {
         }
 
         // Return an empty node if no valid current token is found
-        else {
-            return new ASTNode("", "", null);
-        }
+        return new ASTNode("", "", null);
+    }
+
+    // Check if the token type is valid for a node in the AST
+    private boolean isValidTokenTypeForNode(Lexer.Type type) {
+        return type == Lexer.Type.CONSTANT || type == Lexer.Type.IDENTIFIER
+                || type == Lexer.Type.KEYWORD || type == Lexer.Type.LITERAL
+                || type == Lexer.Type.SYMBOL || type == Lexer.Type.OPERATOR
+                || (type == Lexer.Type.SEPARATOR && !getCurrentToken().c.equals("{"));
     }
 
     // Print the AST in a readable format

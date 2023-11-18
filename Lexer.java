@@ -6,10 +6,8 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Map;
-import java.util.HashMap;
 
 public class Lexer {
-
     // Enumeration for different token types
     public enum Type {
         KEYWORD,
@@ -43,8 +41,10 @@ public class Lexer {
         }
     }
 
-    // Lexical analysis function
+    // Lexical analysis method
     public static List<Token> lex(String input) {
+        Scanner scanner = new Scanner(System.in);
+
         // Define regex patterns for different language constructs
         String localKeywordPattern = "\\b(return)\\b";
         String localConstantPattern = "\\b\\d+\\b";
@@ -53,7 +53,7 @@ public class Lexer {
         String localSymbolPattern = "[#@]";
         String localOperatorPattern = "\\+|-|\\*|/|%|==|!=|<|>|<=|>=|=";
         String localSeparatorPattern = "\\(|\\)|\\{|\\}|;";
-        String localIllegalCharacterPattern = ".";
+        String localIllegalCharacterPattern = "[^\\s]";
 
         // Combine patterns into a single regex for each language construct
         String combinedPattern = String.format("(%s)|(%s)|(%s)|(%s)|(%s)|(%s)|(%s)|(%s)",
@@ -64,13 +64,13 @@ public class Lexer {
         Pattern combinedPatternCompiled = Pattern.compile(combinedPattern);
         Matcher matcher = combinedPatternCompiled.matcher(input);
 
+        // List to store tokens
         List<Token> tokens = new ArrayList<>();
         String lastTokenType = null;
-
         boolean semicolonEncountered = false;
 
+        // Loop through the input and identify tokens
         while (matcher.find()) {
-
             String matchedGroup = matcher.group();
             Type type = null;
 
@@ -89,105 +89,136 @@ public class Lexer {
                 type = Type.OPERATOR;
             } else if (matchedGroup.matches(localSeparatorPattern)) {
                 type = Type.SEPARATOR;
-            } else if (matchedGroup.matches(localIllegalCharacterPattern)){
-                System.out.println("Illegal Character");
+            } else if (matchedGroup.matches(localIllegalCharacterPattern)) {
+                checkIllegalCharacter(scanner, matchedGroup);
+                continue;  // Skip the rest of the loop for illegal characters
             }
+
+            // Check for rule violations
+            checkOperator(type, matcher, input);
+            checkConsecutiveTokens(type, lastTokenType);
+            checkLiteralsAndConstants(type, lastTokenType, matchedGroup);
+
+            // Add the identified token to the list
+            tokens.add(new Token(type, matchedGroup));
+            lastTokenType = type.toString();
 
             if (matchedGroup.equals(";")) {
                 semicolonEncountered = true;
             }
-
-
-            // Rule 1: Check if operators are used correctly between two identifiers
-            if (type == Type.OPERATOR) {
-                if (lastTokenType == null || (!lastTokenType.equals(Type.IDENTIFIER.toString())
-                        && !lastTokenType.equals(Type.CONSTANT.toString()))) {
-                    throw new RuleViolationException("Rule 1 violation: Operator must be used between two identifiers");
-                }
-
-                // Check the token after the operator, skipping whitespaces
-                int nextTokenIndex = matcher.end();
-                while (nextTokenIndex < input.length() && Character.isWhitespace(input.charAt(nextTokenIndex))) {
-                    nextTokenIndex++;
-                }
-
-                if (nextTokenIndex < input.length()) {
-                    String nextToken = input.substring(nextTokenIndex, nextTokenIndex + 1);
-                    Type nextTokenType = null;
-
-                    if (nextToken.matches(localIdentifierPattern)) {
-                        nextTokenType = Type.IDENTIFIER;
-                    } else if (nextToken.matches(localConstantPattern)) {
-                        nextTokenType = Type.CONSTANT;
-                    }
-
-                    if (nextTokenType == null || (!nextTokenType.equals(Type.IDENTIFIER) && !nextTokenType.equals(Type.CONSTANT))) {
-                        throw new RuleViolationException("Rule 1 violation: Operator must be used between two identifiers");
-                    }
-                }
-            }
-
-            // Rule 2: Check if consecutive tokens of the same type are not allowed
-            if (type.toString().equals(lastTokenType) && type != Type.SEPARATOR) {
-                throw new RuleViolationException("Rule 2 violation: Two consecutive tokens of the same type are not allowed");
-            }
-
-            // Rule 3: Check if literals/constants are used only in assignment and return operations
-            if ((type == Type.LITERAL || type == Type.CONSTANT)
-                    && !(lastTokenType != null && (lastTokenType.equals(Type.OPERATOR.toString())
-                    || lastTokenType.equals(Type.KEYWORD.toString())
-                    || lastTokenType.equals(Type.KEYWORD.toString() + "<return>")) && !matchedGroup.equals("return"))) {
-                throw new RuleViolationException("Rule 3 violation: Literals/Constants can only be used in assignment and return operations");
-            }
-
-            tokens.add(new Token(type, matchedGroup));
-            lastTokenType = type.toString();
         }
 
-        // Rule 4: Check if the input ends with a semicolon before the closing curly brace '}'
+        // Check for additional rule violations
+        checkSemicolon(input, semicolonEncountered);
+
+        // Return the list of tokens
+        return tokens;
+    }
+
+    //Rule 1: Check if the code starts and ends with curly brackets
+    private static boolean checkCurlyBracket(String code) {
+        code = code.trim();
+
+        if (!code.startsWith("{") || !code.endsWith("}")) {
+            System.out.println("\nRule 1 Violation: Source code must start with '{' and end with '}'");
+            return false;
+        }
+
+        return true;
+    }
+
+    // Rule 2: Check for illegal characters in the source code
+    private static void checkIllegalCharacter(Scanner scanner, String character) {
+        throw new RuleViolationException("\nRule 2 Violation: Source code cannot have illegal character: " + character);
+    }
+
+    // Rule 3: Check if the operator is used correctly between two identifiers
+    private static void checkOperator(Type type, Matcher matcher, String input) {
+        if (type == Type.OPERATOR) {
+            int nextTokenIndex = matcher.end();
+            while (nextTokenIndex < input.length() && Character.isWhitespace(input.charAt(nextTokenIndex))) {
+                nextTokenIndex++;
+            }
+
+            if (nextTokenIndex < input.length()) {
+                String nextToken = input.substring(nextTokenIndex, nextTokenIndex + 1);
+                Type nextTokenType = null;
+
+                if (nextToken.matches("\\b\\d+\\b")) {
+                    nextTokenType = Type.CONSTANT;
+                } else if (nextToken.matches("\\b(?!return\\b)[a-zA-Z]\\w*\\b")) {
+                    nextTokenType = Type.IDENTIFIER;
+                }
+
+                if (nextTokenType == null || (!nextTokenType.equals(Type.IDENTIFIER) && !nextTokenType.equals(Type.CONSTANT))) {
+                    throw new RuleViolationException("\nRule 3 violation: Operator must be used between two identifiers");
+                }
+            }
+        }
+    }
+
+    // Rule 4: Check for consecutive tokens of the same type
+    private static void checkConsecutiveTokens(Type type, String lastTokenType) {
+        if (type.toString().equals(lastTokenType) && type != Type.SEPARATOR) {
+            throw new RuleViolationException("\nRule 4 Violation: Two consecutive tokens of the same type are not allowed");
+        }
+    }
+
+    // Rule 5: Check if literals and constants are used in the correct context
+    private static void checkLiteralsAndConstants(Type type, String lastTokenType, String matchedGroup) {
+        if ((type == Type.LITERAL || type == Type.CONSTANT)
+                && !(lastTokenType != null && (lastTokenType.equals(Type.OPERATOR.toString())
+                || lastTokenType.equals(Type.KEYWORD.toString())
+                || lastTokenType.equals(Type.KEYWORD.toString() + "<return>")) && !matchedGroup.equals("return"))) {
+            throw new RuleViolationException("\nRule 5 Violation: Literals/Constants can only be used in assignment and return operations");
+        }
+    }
+
+    // Rule 6: Check if a semicolon is present before the closing curly brace
+    private static void checkSemicolon(String input, boolean semicolonEncountered) {
         if (!semicolonEncountered) {
             int lastSemicolonIndex = input.lastIndexOf(';');
             int lastCurlyBraceIndex = input.lastIndexOf('}');
 
             if (lastSemicolonIndex < lastCurlyBraceIndex) {
-                throw new RuleViolationException("Rule 4 Violation: Semicolon is required at the end before the closing curly brace '}'");
+                throw new RuleViolationException("\nRule 6 Violation: Semicolon is required at the end before the closing curly brace '}'");
             }
         }
-
-        return tokens;
     }
 
-    // Function to check if the source code is valid
-    private static boolean isValidSourceCode(String code) {
-        code = code.trim();
-
-        // Check for matching curly brackets
-        if (!code.matches("\\{\\s*.*\\s*\\}")) {
-            return false;
-        }
-
-        // Check for balanced parentheses, braces, and brackets
-        Map<Character, Character> bracketPairs = new HashMap<>();
-        bracketPairs.put('(', ')');
-        bracketPairs.put('{', '}');
-        bracketPairs.put('[', ']');
-
-        // Using a stack to check for balanced brackets
+    // Rule 7: Check if brackets, parentheses, braces, and brackets are in pairs
+    private static boolean checkMatchingPairs(String code) {
+        Map<Character, Character> bracketPairs = Map.of('(', ')', '{', '}', '[', ']');
         java.util.Stack<Character> stack = new java.util.Stack<>();
 
         for (char c : code.toCharArray()) {
             if (bracketPairs.containsKey(c)) {
                 stack.push(c);
-            } else if (bracketPairs.containsValue(c)) {
-                if (stack.isEmpty() || bracketPairs.get(stack.pop()) != c) {
-                    return false;
-                }
+            } else if (bracketPairs.containsValue(c) && (stack.isEmpty() || bracketPairs.get(stack.pop()) != c)) {
+                System.out.println("\nRule 7 Violation: Curly brackets, parentheses, braces, and brackets must be in pairs");
+                return false;
             }
-            // Ignore other characters
         }
 
-        // Ensure the stack is empty (all opening brackets were closed)
-        return stack.isEmpty();
+        if (!stack.isEmpty()) {
+            System.out.println("\nRule 7 Violation: Curly brackets, parentheses, braces, and brackets must be in pairs");
+            return false;
+        }
+        return true;
+    }
+
+    // To ask the user for another input
+    private static boolean askForAnotherInput(Scanner scanner) {
+        System.out.println("\n----------------------------\nDo you want to enter another source code? (yes/no)");
+        String response = scanner.nextLine().trim().toLowerCase();
+        if (!response.equals("yes")) {
+            return false;
+        } else {
+            for (int i = 0; i < 50; i++) {
+                System.out.println(); // Print empty lines to "clear" the console
+            }
+            return true;
+        }
     }
 
     // Main function to take user input, perform lexical analysis, and display tokens and AST
@@ -197,7 +228,7 @@ public class Lexer {
         while (true) {
             System.out.println("Enter source code (Your code needs to start and end with curly brackets):");
             String input = scanner.nextLine();
-            if (isValidSourceCode(input)) {
+            if (checkCurlyBracket(input) && checkMatchingPairs(input)) {
                 try {
                     // Lexical analysis
                     List<Lexer.Token> tokens = Lexer.lex(input);
@@ -209,7 +240,6 @@ public class Lexer {
                     }
 
                     // Parsing
-
                     Parser parser = new Parser(tokens);
 
                     try {
@@ -220,41 +250,21 @@ public class Lexer {
                         System.out.println(e.getMessage());
                     }
 
-                    System.out.println("----------------------------\nDo you want to enter another source code? (yes/no)");
-                    String response = scanner.nextLine().trim().toLowerCase();
-                    if (!response.equals("yes")) {
-                        break;  // Exit the loop if the user doesn't want to enter another source code
-                    }
-                    else {
-                        clearConsole();}
-
                 } catch (RuleViolationException e) {
-                    System.out.println("Rule Violation: " + e.getMessage());
-                    System.out.println("Do you want to re-enter the source code? (yes/no)");
-
-                    String response = scanner.nextLine().trim().toLowerCase();
-                    if (!response.equals("yes")) {
-                        break;  // Exit the loop if the user doesn't want to re-enter the source code
-                    }else {
-                        clearConsole();}
+                    System.out.println(e.getMessage());
                 }
-            } else {
-                System.out.println("Error: Source code must start and end with curly brackets (})");
-                System.out.println("----------------------------\nDo you want to re-enter the source code? (yes/no)");
 
-                String response = scanner.nextLine().trim().toLowerCase();
-                if (!response.equals("yes")) {
+                if (!askForAnotherInput(scanner)) {
+                    break;  // Exit the loop if the user doesn't want to enter another source code
+                }
+
+            } else {
+                if (!askForAnotherInput(scanner)) {
                     break;  // Exit the loop if the user doesn't want to re-enter the source code
-                }else {
-                    clearConsole();}
+                }
             }
         }
 
         scanner.close();
-    }
-    private static void clearConsole() {
-        for (int i = 0; i < 50; i++) {
-            System.out.println(); // Print empty lines to "clear" the console
-        }
     }
 }
