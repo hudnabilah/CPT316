@@ -14,6 +14,9 @@ The 'Lexer.java' file contains the implementation of a lexer, which tokenizes so
 
 # Guidelines
 
+# Executing the Program
+- Run the program through executing "CPT316/Lexer.java". The whole folder must be inside the same Java project.
+
 ## Lexer
 1. Ensure the source code starts and ends with curly brackets: '{}'.
 2. Enter the source code when prompted.
