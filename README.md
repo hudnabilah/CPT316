@@ -1,4 +1,4 @@
-# CPT316 Assignment 1 (Group 10)
+# CPT316 Assignment 1 (Group 8)
 Members:  
   1. Abdul Qayyum bin Anuar (158085)
   2. Fatin Aqilah binti Zukri (155330)
