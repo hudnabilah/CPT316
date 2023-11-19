@@ -1,7 +1,7 @@
 # CPT316 Assignment 1 (Group 10)
 Members:  
   1. Abdul Qayyum bin Anuar (158085)
-  2. Fatin Aqilah binti Zukri (159072)
+  2. Fatin Aqilah binti Zukri (155330)
   3. Huda Nabilah binti Zulkarnain (157634)
   4. Michelle Ling Mya Shuet (157926)
   5. Sofea binti Taufik (159072)
